@@ -1,0 +1,92 @@
+---
+title: "Billboard Graphic"
+execute:
+  echo: false
+---
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(forcats)
+library(ggplot2)
+
+data("billboard")
+
+billboard_long <- billboard %>%
+  pivot_longer(
+    cols = starts_with("wk"),
+    names_to = "week",
+    values_to = "rank",
+    values_drop_na = TRUE
+  ) %>%
+  mutate(week = as.integer(str_remove(week, "wk")))
+
+# Count weeks on chart per track
+track_counts <- billboard_long %>%
+  count(track, sort = TRUE)
+
+# Top 50 tracks (most weeks)
+top_50_tracks <- track_counts %>% slice_max(n, n = 50) %>% pull(track)
+
+# Bottom 50 tracks (least weeks)
+bottom_50_tracks <- track_counts %>% slice_min(n, n = 50) %>% pull(track)
+
+# Filter the data for top 50 and bottom 50 separately
+billboard_top50 <- billboard_long %>% filter(track %in% top_50_tracks)
+billboard_bottom50 <- billboard_long %>% filter(track %in% bottom_50_tracks)
+```
+
+```{r, fig.width=18, fig.height=25}
+
+library(patchwork)
+
+p1 <- ggplot(billboard_bottom50, aes(x = week, y = fct_reorder(track, desc(week)), fill = rank)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(
+    title = "Bottom 50 Billboard Songs by Weeks on Chart",
+    subtitle = "Each tile shows weekly rank (lower is better)",
+    x = "Week on Chart",
+    y = "Song Title",
+    fill = "Rank",
+    caption = "Source: tidyr::billboard"
+  ) +
+  theme_minimal(base_family = "Times") +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text.y = element_text(size = 6),
+    axis.text.x = element_text(size = 10),
+    plot.margin = margin(20, 20, 20, 20),
+    legend.position = "top"
+  )
+
+p2 <- ggplot(billboard_top50, aes(x = week, y = fct_reorder(track, desc(week)), fill = rank)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(
+    title = "Top 50 Billboard Songs by Weeks on Chart",
+    subtitle = "Each tile shows weekly rank (lower is better)",
+    x = "Week on Chart",
+    y = "Song Title",
+    fill = "Rank",
+    caption = "Source: tidyr::billboard"
+  ) +
+  theme_minimal(base_family = "Times") +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text.y = element_text(size = 6),
+    axis.text.x = element_text(size = 10),
+    plot.margin = margin(20, 20, 20, 20),
+    legend.position = "top"
+  )
+
+combined_plot <- p1 + p2 + plot_layout(ncol = 2)
+
+# Print combined plot
+combined_plot
+```
