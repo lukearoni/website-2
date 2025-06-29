@@ -1,5 +1,8 @@
 ---
 title: "About"
 ---
+## About Me
 
-About this site
+My name is **Luke Li**, and I am currently attending *Lexington High School* in the class of 2026.
+
+[Kane's Free Data Science Bootcamp](https://bootcamp.davidkane.info)
